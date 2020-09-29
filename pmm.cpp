@@ -6,29 +6,94 @@
 
 #define MAX(X,Y) ((X > Y) ? X : Y)
 
-#define MODO_TESTE // comentar para NÃO executar os testes
+//#define MODO_TESTE // comentar para NÃO executar os testes
 
 const int PESO = 100;
 
 
+using namespace std;
+
 int main()
 {
+    //srand(time(NULL));
+
     #ifdef MODO_TESTE
         teste_memset();
         teste_Estruturas();
     #else
         lerDados("pmm1.txt");
         //testarDados("");
+        ordenarObjetos();
 
         Solucao sol;
+        clock_t h;
+        double tempo;
+
+        h = clock();
         heuConAle(sol);
         calcFO(sol);
+        h = clock() - h;
+
         escreverSol(sol, 0);
+        tempo = (double)h/CLOCKS_PER_SEC;
+        printf("Construtiva Aleatoria...: %.5f seg.\n",tempo);
+
+
+        h = clock();
+        heuConGul(sol);
+        calcFO(sol);
+        h = clock() - h;
+        tempo = (double)h/CLOCKS_PER_SEC;
+        escreverSol(sol, 0);
+        printf("Construtiva Gulosa...: %.5f seg.\n",tempo);
+
+
+
     #endif
     return 0;
 }
 
 
+//-------------------------------------------------
+void heuConGul(Solucao &s)
+{
+    memset(&s.vetPes, 0, sizeof(s.vetPes));
+    memset(&s.vetSol, -1, sizeof(s.vetSol));
+    for(int j = 0; j < numObj; j++)
+        for(int i = 0; i < numMoc; i++)
+            if(s.vetPes[i] + vetPesObj[vetIndObjOrd[j]] <= vetCapMoc[i])
+            {
+                s.vetSol[vetIndObjOrd[j]] = i;
+                s.vetPes[i] += vetPesObj[vetIndObjOrd[j]];
+                break;
+            }
+}
+
+//-------------------------------------------------
+void ordenarObjetos()
+{
+    int flag,aux;
+    for(int j = 0; j < numObj; j++)
+        vetIndObjOrd[j] = j;
+    flag = 1;
+    while(flag)
+    {
+        flag = 0;
+        for(int j = 0; j < numObj-1;j++)
+        {
+            if(((double)vetValObj[vetIndObjOrd[j]])/vetPesObj[vetIndObjOrd[j]] <
+               ((double)vetValObj[vetIndObjOrd[j+1]])/vetPesObj[vetIndObjOrd[j+1]])
+//            if(vetValObj[vetIndObjOrd[j]] <
+//               vetValObj[vetIndObjOrd[j+1]])
+            {
+                flag = 1;
+                aux = vetIndObjOrd[j];
+                vetIndObjOrd[j] = vetIndObjOrd[j+1];
+                vetIndObjOrd[j+1] = aux;
+            }
+        }
+    }
+}
 
 //-------------------------------------------------
 void heuConAle(Solucao &s)
@@ -68,9 +133,9 @@ void escreverSol(const Solucao &s, const bool &flag)
 }
 
 //-------------------------------------------------
-void lerDados(char *arq)
+void lerDados(string arq)
 {
-    FILE *f = fopen(arq,"r");
+    FILE *f = fopen(arq.c_str(),"r");
     fscanf(f,"%d %d\n",&numObj,&numMoc);
     for(int j = 0; j < numObj; j++)
         fscanf(f,"%d",&vetValObj[j]);

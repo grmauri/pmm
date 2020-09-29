@@ -4,6 +4,8 @@
 #define MAX_OBJ 500
 #define MAX_MOC 50
 
+#include <string>
+
 // Estruturas de dados
 typedef struct tSolucao
 {
@@ -19,11 +21,16 @@ int vetValObj[MAX_OBJ];
 int vetPesObj[MAX_OBJ];
 int vetCapMoc[MAX_MOC];
 
+int vetIndObjOrd[MAX_OBJ];
+
+
 // Metodos
+void heuConGul(Solucao &s);
+void ordenarObjetos();
 void heuConAle(Solucao &s);
 void calcFO(Solucao &s);
 void escreverSol(const Solucao &s, const bool &flag);
-void lerDados(char *arq);
+void lerDados(std::string arq);
 void testarDados(char *arq);
 //=================================================
 
