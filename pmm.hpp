@@ -25,6 +25,7 @@ int vetIndObjOrd[MAX_OBJ];
 
 
 // Metodos
+void heuConAleGul(Solucao &s, const int &percentual);
 void heuConGul(Solucao &s);
 void ordenarObjetos();
 void heuConAle(Solucao &s);

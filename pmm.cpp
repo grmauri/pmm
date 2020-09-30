@@ -6,7 +6,7 @@
 
 #define MAX(X,Y) ((X > Y) ? X : Y)
 
-//#define MODO_TESTE // comentar para NÃO executar os testes
+//#define MODO_TESTE // comentar para NAO executar os testes
 
 const int PESO = 100;
 
@@ -21,7 +21,7 @@ int main()
         teste_memset();
         teste_Estruturas();
     #else
-        lerDados("pmm1.txt");
+        lerDados("pmm3.txt");
         //testarDados("");
         ordenarObjetos();
 
@@ -48,11 +48,47 @@ int main()
         printf("Construtiva Gulosa...: %.5f seg.\n",tempo);
 
 
+        h = clock();
+        heuConAleGul(sol, 10);
+        calcFO(sol);
+        h = clock() - h;
+        tempo = (double)h/CLOCKS_PER_SEC;
+        escreverSol(sol, 0);
+        printf("Construtiva Aleatoria Gulosa...: %.5f seg.\n",tempo);
+
+
+
+
 
     #endif
     return 0;
 }
 
+//-------------------------------------------------
+void heuConAleGul(Solucao &s, const int &percentual)
+{
+    int tam, pos, aux;
+    int vetAux[MAX_OBJ];
+    memcpy(&vetAux, &vetIndObjOrd, sizeof(vetIndObjOrd));
+    tam = MAX(1, (percentual / 100.0) * numObj);
+    for(int j = 0; j < tam; j++)
+    {
+        pos = j + rand()%(numObj - j);
+        aux = vetAux[pos];
+        vetAux[pos] = vetAux[j];
+        vetAux[j] = aux;
+    }
+    memset(&s.vetPes, 0, sizeof(s.vetPes));
+    memset(&s.vetSol, -1, sizeof(s.vetSol));
+    for(int j = 0; j < numObj; j++)
+        for(int i = 0; i < numMoc; i++)
+            if(s.vetPes[i] + vetPesObj[vetAux[j]] <= vetCapMoc[i])
+            {
+                s.vetSol[vetAux[j]] = i;
+                s.vetPes[i] += vetPesObj[vetAux[j]];
+                break;
+            }
+}
 
 //-------------------------------------------------
 void heuConGul(Solucao &s)
