@@ -25,12 +25,18 @@ int vetIndObjOrd[MAX_OBJ];
 
 
 // Metodos
+
+
+void heuBLPM(Solucao &s);
+//---
 void heuConAleGul(Solucao &s, const int &percentual);
 void heuConGul(Solucao &s);
-void ordenarObjetos();
 void heuConAle(Solucao &s);
+//---
 void calcFO(Solucao &s);
 void escreverSol(const Solucao &s, const bool &flag);
+//---
+void ordenarObjetos();
 void lerDados(std::string arq);
 void testarDados(char *arq);
 //=================================================
@@ -54,5 +60,6 @@ void escSolBin(SolucaoBIN &s, const bool &flag);
 
 void teste_Estruturas();
 void teste_memset();
+void teste_heuConstrutivas();
 
 #endif // PMM_HPP_INCLUDED

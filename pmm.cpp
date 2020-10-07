@@ -24,37 +24,29 @@ int main()
         lerDados("pmm3.txt");
         //testarDados("");
         ordenarObjetos();
+        //teste_heuConstrutivas();
 
         Solucao sol;
         clock_t h;
         double tempo;
 
         h = clock();
+        //heuConAleGul(sol,10);
         heuConAle(sol);
-        calcFO(sol);
-        h = clock() - h;
-
-        escreverSol(sol, 0);
-        tempo = (double)h/CLOCKS_PER_SEC;
-        printf("Construtiva Aleatoria...: %.5f seg.\n",tempo);
-
-
-        h = clock();
-        heuConGul(sol);
-        calcFO(sol);
-        h = clock() - h;
-        tempo = (double)h/CLOCKS_PER_SEC;
-        escreverSol(sol, 0);
-        printf("Construtiva Gulosa...: %.5f seg.\n",tempo);
-
-
-        h = clock();
-        heuConAleGul(sol, 10);
         calcFO(sol);
         h = clock() - h;
         tempo = (double)h/CLOCKS_PER_SEC;
         escreverSol(sol, 0);
         printf("Construtiva Aleatoria Gulosa...: %.5f seg.\n",tempo);
+
+        h = clock();
+        heuBLPM(sol);
+        h = clock() - h;
+        tempo = (double)h/CLOCKS_PER_SEC;
+        escreverSol(sol, 0);
+        printf("BL PM...: %.5f seg.\n",tempo);
+
+
 
 
 
@@ -62,6 +54,47 @@ int main()
 
     #endif
     return 0;
+}
+
+
+
+
+
+
+
+
+
+
+//-------------------------------------------------
+void heuBLPM(Solucao &s)
+{
+    int mocOri, foOri;
+    int melFO = s.funObj;
+    INICIO : ;
+    foOri = s.funObj;
+    for(int j = 0; j < numObj; j++)
+    {
+        mocOri = s.vetSol[j];
+        for(int i = -1; i < numMoc; i++)
+        {
+            if(i != s.vetSol[j])
+            {
+                s.vetSol[j] = i;
+                calcFO(s);
+                if(s.funObj > melFO)
+                {
+                    melFO = s.funObj;
+                    goto INICIO;
+                }
+                else
+                {
+                    s.vetSol[j] = mocOri;
+                    s.funObj = foOri;
+                }
+            }
+        }
+    }
+    calcFO(s);
 }
 
 //-------------------------------------------------
@@ -106,32 +139,6 @@ void heuConGul(Solucao &s)
 }
 
 //-------------------------------------------------
-void ordenarObjetos()
-{
-    int flag,aux;
-    for(int j = 0; j < numObj; j++)
-        vetIndObjOrd[j] = j;
-    flag = 1;
-    while(flag)
-    {
-        flag = 0;
-        for(int j = 0; j < numObj-1;j++)
-        {
-            if(((double)vetValObj[vetIndObjOrd[j]])/vetPesObj[vetIndObjOrd[j]] <
-               ((double)vetValObj[vetIndObjOrd[j+1]])/vetPesObj[vetIndObjOrd[j+1]])
-//            if(vetValObj[vetIndObjOrd[j]] <
-//               vetValObj[vetIndObjOrd[j+1]])
-            {
-                flag = 1;
-                aux = vetIndObjOrd[j];
-                vetIndObjOrd[j] = vetIndObjOrd[j+1];
-                vetIndObjOrd[j+1] = aux;
-            }
-        }
-    }
-}
-
-//-------------------------------------------------
 void heuConAle(Solucao &s)
 {
     for(int j = 0; j < numObj; j++)
@@ -165,6 +172,32 @@ void escreverSol(const Solucao &s, const bool &flag)
         printf("\nPES_MOC: ");
         for(int i = 0; i < numMoc; i++)
             printf("%d  ", s.vetPes[i]);
+    }
+}
+
+//-------------------------------------------------
+void ordenarObjetos()
+{
+    int flag,aux;
+    for(int j = 0; j < numObj; j++)
+        vetIndObjOrd[j] = j;
+    flag = 1;
+    while(flag)
+    {
+        flag = 0;
+        for(int j = 0; j < numObj-1;j++)
+        {
+            if(((double)vetValObj[vetIndObjOrd[j]])/vetPesObj[vetIndObjOrd[j]] <
+               ((double)vetValObj[vetIndObjOrd[j+1]])/vetPesObj[vetIndObjOrd[j+1]])
+//            if(vetValObj[vetIndObjOrd[j]] <
+//               vetValObj[vetIndObjOrd[j+1]])
+            {
+                flag = 1;
+                aux = vetIndObjOrd[j];
+                vetIndObjOrd[j] = vetIndObjOrd[j+1];
+                vetIndObjOrd[j+1] = aux;
+            }
+        }
     }
 }
 
@@ -209,6 +242,44 @@ void testarDados(char *arq)
 
 //======== ESTRUTURAS E METODOS AUXILIARES ========
 const int PESO2 = 1000; // peso usado para objetos levados em mais de uma mochila
+
+//-------------------------------------------------
+void teste_heuConstrutivas()
+{
+    Solucao sol;
+    clock_t h;
+    double tempo;
+    const int repeticoes = 1000;
+
+    h = clock();
+    for(int r = 0; r < repeticoes; r++)
+        heuConAle(sol);
+    calcFO(sol);
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    escreverSol(sol, 0);
+    printf("Construtiva Aleatoria...: %.5f seg.\n",tempo);
+
+
+    h = clock();
+    for(int r = 0; r < repeticoes; r++)
+        heuConGul(sol);
+    calcFO(sol);
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    escreverSol(sol, 0);
+    printf("Construtiva Gulosa...: %.5f seg.\n",tempo);
+
+
+    h = clock();
+    for(int r = 0; r < repeticoes; r++)
+        heuConAleGul(sol, 10);
+    calcFO(sol);
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    escreverSol(sol, 0);
+    printf("Construtiva Aleatoria Gulosa...: %.5f seg.\n",tempo);
+}
 
 //-------------------------------------------------
 void teste_Estruturas()
@@ -256,7 +327,6 @@ void teste_Estruturas()
     tempo = (double)h/CLOCKS_PER_SEC;
     printf("Calculo da FO (BINARIA).........................: %.5f seg.\n",tempo);
 }
-
 
 //-------------------------------------------------
 void teste_memset()
