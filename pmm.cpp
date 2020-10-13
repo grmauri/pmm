@@ -21,23 +21,30 @@ int main()
         teste_memset();
         teste_Estruturas();
     #else
-        lerDados("pmm3.txt");
+        lerDados("pmm1.txt");
         //testarDados("");
         ordenarObjetos();
         //teste_heuConstrutivas();
+        for(int j = 0; j < numObj; j++)
+            vetObjAux[j] = j;
 
         Solucao sol;
         clock_t h;
         double tempo;
 
         h = clock();
-        //heuConAleGul(sol,10);
         heuConAle(sol);
         calcFO(sol);
         h = clock() - h;
         tempo = (double)h/CLOCKS_PER_SEC;
         escreverSol(sol, 0);
-        printf("Construtiva Aleatoria Gulosa...: %.5f seg.\n",tempo);
+        printf("Construtiva Aleatoria...: %.5f seg.\n",tempo);
+
+        Solucao sol2;
+        memcpy(&sol2, &sol, sizeof(sol));
+
+        Solucao sol3;
+        memcpy(&sol3, &sol, sizeof(sol));
 
         h = clock();
         heuBLPM(sol);
@@ -46,7 +53,19 @@ int main()
         escreverSol(sol, 0);
         printf("BL PM...: %.5f seg.\n",tempo);
 
+        h = clock();
+        heuBLMM(sol2);
+        h = clock() - h;
+        tempo = (double)h/CLOCKS_PER_SEC;
+        escreverSol(sol2, 0);
+        printf("BL MM...: %.5f seg.\n",tempo);
 
+        h = clock();
+        heuBLRA(sol3, (numObj * (numMoc + 1)));
+        h = clock() - h;
+        tempo = (double)h/CLOCKS_PER_SEC;
+        escreverSol(sol3, 0);
+        printf("BL RA...: %.5f seg.\n",tempo);
 
 
 
@@ -56,30 +75,98 @@ int main()
     return 0;
 }
 
+//-------------------------------------------------
+void heuBLRA(Solucao &s, const int &iteracoes)
+{
+    int obj, moc, mocOri, foOri, flag;
+    int melFO = s.funObj;
+    while(true)
+    {
+        flag = 1;
+        for(int t = 0; t < iteracoes; t++)
+        {
+            foOri = s.funObj;
+            obj = rand()%numObj;
+            do
+                moc = rand()%(numMoc + 1) - 1;
+            while(moc == s.vetSol[obj]);
+            mocOri = s.vetSol[obj];
+            s.vetSol[obj] = moc;
+            calcFO(s);
+            if(s.funObj > melFO)
+            {
+                melFO = s.funObj;
+                flag = 0;
+            }
+            else
+            {
+                s.vetSol[obj] = mocOri;
+                s.funObj = foOri;
+            }
+        }
+        if(flag)
+            break;
+    }
+    calcFO(s);
+}
 
-
-
-
-
-
-
-
+//-------------------------------------------------
+void heuBLMM(Solucao &s)
+{
+    int mocOri, foOri, melObj, melMoc, flag;
+    int melFO = s.funObj;
+    while(true)
+    {
+        flag = 0;
+        foOri = s.funObj;
+        for(int j = 0; j < numObj; j++)
+        {
+            mocOri = s.vetSol[j];
+            for(int i = -1; i < numMoc; i++)
+            {
+                if(i != s.vetSol[j])
+                {
+                    s.vetSol[j] = i;
+                    calcFO(s);
+                    if(s.funObj > melFO)
+                    {
+                        melFO = s.funObj;
+                        melObj = j;
+                        melMoc = i;
+                        flag = 1;
+                    }
+                }
+            }
+            s.vetSol[j] = mocOri;
+            s.funObj = foOri;
+        }
+        if(flag)
+        {
+            s.vetSol[melObj] = melMoc;
+            s.funObj = melFO;
+        }
+        else
+            break;
+    }
+    calcFO(s);
+}
 
 //-------------------------------------------------
 void heuBLPM(Solucao &s)
 {
-    int mocOri, foOri;
+    int mocOri, foOri, indice, aux;
     int melFO = s.funObj;
     INICIO : ;
     foOri = s.funObj;
     for(int j = 0; j < numObj; j++)
     {
-        mocOri = s.vetSol[j];
+        indice = j + rand()%(numObj - j);
+        mocOri = s.vetSol[vetObjAux[indice]];
         for(int i = -1; i < numMoc; i++)
         {
-            if(i != s.vetSol[j])
+            if(i != s.vetSol[vetObjAux[indice]])
             {
-                s.vetSol[j] = i;
+                s.vetSol[vetObjAux[indice]] = i;
                 calcFO(s);
                 if(s.funObj > melFO)
                 {
@@ -88,11 +175,14 @@ void heuBLPM(Solucao &s)
                 }
                 else
                 {
-                    s.vetSol[j] = mocOri;
+                    s.vetSol[vetObjAux[indice]] = mocOri;
                     s.funObj = foOri;
                 }
             }
         }
+        aux = vetObjAux[j];
+        vetObjAux[j] = vetObjAux[indice];
+        vetObjAux[indice] = aux;
     }
     calcFO(s);
 }

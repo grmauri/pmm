@@ -22,11 +22,12 @@ int vetPesObj[MAX_OBJ];
 int vetCapMoc[MAX_MOC];
 
 int vetIndObjOrd[MAX_OBJ];
-
+int vetObjAux[MAX_OBJ];
 
 // Metodos
 
-
+void heuBLRA(Solucao &s, const int &iteracoes);
+void heuBLMM(Solucao &s);
 void heuBLPM(Solucao &s);
 //---
 void heuConAleGul(Solucao &s, const int &percentual);
