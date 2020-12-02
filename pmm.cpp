@@ -4,57 +4,124 @@
 #include <memory.h>
 #include <time.h>
 #include <math.h>
+#ifndef _WIN64
+    #include <climits>
+#endif
 
 #define MAX(X,Y) ((X > Y) ? X : Y)
 
 //#define MODO_TESTE    // executa apenas testes de desempenho
-#define DBG             // modo "debug" (mostra a convergência dos métodos)
-//#define RND           // modo aleatório (habilita o srand)
+//#define DBG           // modo "debug" (mostra a convergï¿½ncia dos mï¿½todos)
 
 const int PESO = 100;   // peso para inviabilidades
 
 using namespace std;
 
-int main()
+int main(int argc, char *argv[])
 {
-    #ifdef RND
-        srand(time(NULL));
-    #endif
-
     #ifdef MODO_TESTE
         teste_memset();
         teste_estruturas();
         teste_heuConstrutivas();
         teste_buscaLocal();
     #else
-        lerDados("pmm2.txt");
+        //---
+        // parï¿½metros do executï¿½vel
+        int seed = 0;
+        int metodo = 0; // 0: SA; 1: BT; 2: GRASP; 3: AG; 4: VNS; 5: ILS
+        string instancia = "pmm1.txt";
+        double tempo_limite = 5;
+        string saida = "saida.txt";
+        // SA
+        double alfa = 0.975;
+        int sa_max = 2;
+        double t_0 = 1000;
+        double t_c = 0.01;
+        // BT
+        int tam_lista = 1;
+        // GRASP
+        int LRC = 15;
+        // AG
+        int pop = 1;
+        int cro = 2;
+        double mut = 7;
+        double eli = 15;
+        // VNS e ILS sem parï¿½metros especï¿½ficos
+        //---
+        // usar os valores passados por parï¿½metro; caso contrï¿½rio, usarï¿½ os valores definidos acima
+        if (argc > 1)
+        {
+            seed = stoi(argv[1]);
+            metodo = stoi(argv[2]);
+            instancia = argv[3];
+            tempo_limite = stof(argv[4]);
+            saida = argv[5];
+            switch(metodo)
+            {
+                case 0:
+                    alfa = stof(argv[6]);
+                    sa_max = stoi(argv[7]);
+                    t_0 = stof(argv[8]);
+                    t_c = stof(argv[9]);
+                    break;
+                case 1:
+                    tam_lista = stoi(argv[6]);
+                    break;
+                case 2:
+                    LRC = stoi(argv[6]);
+                    break;
+                case 3:
+                    pop = stoi(argv[6]);
+                    cro = stoi(argv[7]);
+                    mut = stof(argv[8]);
+                    eli = stof(argv[9]);
+                    break;
+            }
+        }
+        //---
+        srand(seed);
+
+        lerDados(instancia);
         //testarDados("");
         ordenarObjetos();
 
         Solucao sol;
-        clock_t h;
-        double tempo_limite, tempo_melhor, tempo_total;
+        string aux;
+        double tempo_melhor, tempo_total;
 
-        tempo_limite = 5;
+        switch(metodo)
+        {
+            case 0:
+                simulated_annealing(alfa, sa_max*(numObj*(numMoc+1)), t_0, t_c, tempo_limite, sol, tempo_melhor, tempo_total);
+                aux = "SA";
+                break;
+            case 1:
+                busca_tabu(tam_lista * (numObj*(numMoc+1)), tempo_limite, sol, tempo_melhor, tempo_total);
+                aux = "BT";
+                break;
+            case 2:
+                grasp(LRC, tempo_limite, sol, tempo_melhor, tempo_total);
+                aux = "GRASP";
+                break;
+            case 3:
+                algoritmo_genetico(pop * numObj, cro * numObj, mut, eli, tempo_limite, sol, tempo_melhor, tempo_total);
+                aux = "AG";
+                break;
+            case 4:
+                vns(tempo_limite, sol, tempo_melhor, tempo_total);
+                aux = "VNS";
+                break;
+            case 5:
+                ils(tempo_limite, sol, tempo_melhor, tempo_total);
+                aux = "ILS";
+                break;
+        }
 
-        simulated_annealing(0.975, 2*(numObj*(numMoc+1)), 1000, 0.01, tempo_limite, sol, tempo_melhor, tempo_total);
-        printf("SA - FO: %d\tTempo melhor: %.5f\tTempo total: %.5f\n", sol.funObj, tempo_melhor, tempo_total);
-
-        busca_tabu((numObj*(numMoc+1)), tempo_limite, sol, tempo_melhor, tempo_total);
-        printf("BT - FO: %d\tTempo melhor: %.5f\tTempo total: %.5f\n", sol.funObj, tempo_melhor, tempo_total);
-
-        grasp(15, tempo_limite, sol, tempo_melhor, tempo_total);
-        printf("GRASP - FO: %d\tTempo melhor: %.5f\tTempo total: %.5f\n", sol.funObj, tempo_melhor, tempo_total);
-
-        algoritmo_genetico(10*numObj, (numObj*(numMoc+1)), 7, 15, tempo_limite, sol, tempo_melhor, tempo_total);
-        printf("AG - FO: %d\tTempo melhor: %.5f\tTempo total: %.5f\n", sol.funObj, tempo_melhor, tempo_total);
-
-        vns(tempo_limite, sol, tempo_melhor, tempo_total);
-        printf("VNS - FO: %d\tTempo melhor: %.5f\tTempo total: %.5f\n", sol.funObj, tempo_melhor, tempo_total);
-
-        ils(tempo_limite, sol, tempo_melhor, tempo_total);
-        printf("ILS - FO: %d\tTempo melhor: %.5f\tTempo total: %.5f\n", sol.funObj, tempo_melhor, tempo_total);
-
+        //---
+        // atualizar o arquivo de saï¿½da
+        FILE *f = fopen(saida.c_str(),"at");
+        fprintf(f, "%s\t%d\t\t%d\t%.5f\t\t%.5f\n", aux.c_str(), seed, sol.funObj, tempo_melhor, tempo_total);
+        fclose(f);
     #endif
     return 0;
 }
@@ -161,7 +228,7 @@ void busca_tabu(const int tam_lista, const double tempo_max, Solucao &s, double 
         //---------------------------
         // Verificar a melhor vizinha
         melViz = -INT_MAX;
-        flag = -1; // todos os vizinhos na lista e não há melhora
+        flag = -1; // todos os vizinhos na lista e nï¿½o hï¿½ melhora
         for(int j = 0; j < numObj; j++)
         {
             mocOri = s_vizinha.vetSol[j];
@@ -173,26 +240,26 @@ void busca_tabu(const int tam_lista, const double tempo_max, Solucao &s, double 
                     s_vizinha.vetSol[j] = i;
                     calcFO(s_vizinha);
                     pos = procurar_lista(lista_tabu, qtd_lista, j, i);
-                    if(pos != -1) // está na lista tabu
+                    if(pos != -1) // estï¿½ na lista tabu
                     {
                         if(s_vizinha.funObj > s.funObj) // vizinha melhor que a melhor
                         {
-                            flag = 0; // está na lista tabu, mas é melhor do que a melhor
+                            flag = 0; // estï¿½ na lista tabu, mas ï¿½ melhor do que a melhor
                             melViz = s_vizinha.funObj;
                             melMoc = i;
                             melObj = j;
-                            melPos = pos; // posição na lista tabu
+                            melPos = pos; // posiï¿½ï¿½o na lista tabu
                         }
                     }
-                    else // não está na lista
+                    else // nï¿½o estï¿½ na lista
                     {
                         if(s_vizinha.funObj > melViz)
                         {
-                            flag = 1; // melhor vizinha que não está na lista tabu
+                            flag = 1; // melhor vizinha que nï¿½o estï¿½ na lista tabu
                             melViz = s_vizinha.funObj;
                             melMoc = i;
                             melObj = j;
-                            melPos = -1; // não está na lista tabu
+                            melPos = -1; // nï¿½o estï¿½ na lista tabu
                         }
                     }
                 }
@@ -202,7 +269,7 @@ void busca_tabu(const int tam_lista, const double tempo_max, Solucao &s, double 
         }
         //---------------------------
         // Atualizar a lista e gerar a melhor vizinha
-        if(flag == -1) // todos os vizinhos na lista e nenhuma melhora encontrada, então aplica-se o primeiro movimento da lista (FIFO)
+        if(flag == -1) // todos os vizinhos na lista e nenhuma melhora encontrada, entï¿½o aplica-se o primeiro movimento da lista (FIFO)
         {
             melObj = lista_tabu[0][0];
             melMoc = lista_tabu[1][0];
@@ -212,15 +279,15 @@ void busca_tabu(const int tam_lista, const double tempo_max, Solucao &s, double 
         }
         else
         {
-            if(flag == 0) // vizinha melhor que a melhor solução, então remove-se o movimento que gerou a vizinha
+            if(flag == 0) // vizinha melhor que a melhor soluï¿½ï¿½o, entï¿½o remove-se o movimento que gerou a vizinha
                 remover_lista(lista_tabu, qtd_lista, melPos);
-            else // movimento que gerou a vizinha não está na lista, então deve-se inserir
+            else // movimento que gerou a vizinha nï¿½o estï¿½ na lista, entï¿½o deve-se inserir
                 inserir_lista(lista_tabu, qtd_lista, tam_lista, melObj, melMoc);
             s_vizinha.vetSol[melObj] = melMoc;
             s_vizinha.funObj = melViz;
         }
         //--------------------------------------
-        // Atualizar a melhor solução
+        // Atualizar a melhor soluï¿½ï¿½o
         if(s_vizinha.funObj > s.funObj)
         {
             memcpy(&s, &s_vizinha, sizeof(s_vizinha));
@@ -302,7 +369,6 @@ void algoritmo_genetico(const int pop, const int cro, const double mut, const do
 {
     int filho, p1, p2;
     clock_t hI, hF;
-    Solucao s_vizinha;
     printf("\n\n>>> EXECUTANDO O AG...\n\n");
     hI = clock();
     for(int i = 0; i < pop; i++)
@@ -318,13 +384,20 @@ void algoritmo_genetico(const int pop, const int cro, const double mut, const do
         printf("FO: %d\tTempo: %.2f\n", s.funObj, tempo_melhor);
     #endif
     tempo_total = tempo_melhor;
+
+
+//    for(int i = 0; i < pop; i++)
+//        printf("%d - %d\n",i+1,vet_populacao[i].funObj);
+//    system("pause");
+
+
     while(tempo_total < tempo_max)
     {
        filho = pop;
        for(int i = 0; i < cro; i++)
        {
            //------------------
-           // Seleção elite
+           // Seleï¿½ï¿½o elite
            p1 = MAX(1,(eli/100.0)*pop);
            p1 = rand()%p1;
            do
@@ -352,7 +425,7 @@ void algoritmo_genetico(const int pop, const int cro, const double mut, const do
                 #endif
            }
            //------------------
-           // Mutação
+           // Mutaï¿½ï¿½o
            if(rand()%100 < mut)
            {
                gerar_vizinha(vet_populacao[filho]);
@@ -379,11 +452,51 @@ void algoritmo_genetico(const int pop, const int cro, const double mut, const do
                     #endif
                }
            }
+
+/*
+           heuBLPM(vet_populacao[filho]);
+           if(vet_populacao[filho].funObj > s.funObj)
+           {
+                memcpy(&s, &vet_populacao[filho], sizeof(vet_populacao[filho]));
+                hF = clock();
+                tempo_melhor = ((double)(hF - hI))/CLOCKS_PER_SEC;
+                #ifdef DBG
+                    printf("FO: %d\tTempo: %.2f\n", s.funObj, tempo_melhor);
+                #endif
+           }
+
+           heuBLPM(vet_populacao[filho+1]);
+           if(vet_populacao[filho+1].funObj > s.funObj)
+           {
+                memcpy(&s, &vet_populacao[filho+1], sizeof(vet_populacao[filho+1]));
+                hF = clock();
+                tempo_melhor = ((double)(hF - hI))/CLOCKS_PER_SEC;
+                #ifdef DBG
+                    printf("FO: %d\tTempo: %.2f\n", s.funObj, tempo_melhor);
+                #endif
+           }
+*/
+
+
+
+
+
+
+
+
            filho += 2;
        }
        //------------------
-       // Seleção de sobreviventes
+       // Seleï¿½ï¿½o de sobreviventes
        ordenar_populacao(pop + 2 * cro);
+
+
+//    for(int i = 0; i < pop; i++)
+//        printf("%d - %d\n",i+1,vet_populacao[i].funObj);
+//    system("pause");
+
+
+
        hF = clock();
        tempo_total = ((double)(hF - hI))/CLOCKS_PER_SEC;
     }

@@ -35,7 +35,7 @@ void inserir_lista(int **lista, int &qtd, const int tam, const int o, const int 
 //---
 void grasp(const int lrc, const double tempo_max, Solucao &s, double &tempo_melhor, double &tempo_total);
 //---
-Solucao vet_populacao[10000];
+Solucao vet_populacao[100000];
 void algoritmo_genetico(const int pop, const int cro, const double mut, const double eli,
                         const double tempo_max, Solucao &s, double &tempo_melhor, double &tempo_total);
 void crossover(const int p1, const int p2, const int f1, const int f2);
