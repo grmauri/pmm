@@ -13,14 +13,15 @@ int PESO = 100;
 int main()
 {
     //teste_alocacao();
+    testar_estruturas();
 
 
-    Solucao sol;
-    lerDados("pmm1.txt");
+    //Solucao sol;
+    //lerDados("pmm1.txt");
     //testarDados("");
-    heuConAle(sol);
-    calcFO(sol);
-    escreverSolucao(sol,1);
+    //heuConAle(sol);
+    //calcFO(sol);
+    //escreverSolucao(sol,1);
 
 
 
@@ -96,6 +97,70 @@ void testarDados(char *arq)
         fclose(f);
 }
 
+
+
+
+
+
+
+
+
+
+void testar_estruturas()
+{
+    const int repeticoes = 1000;
+
+    //---
+    clock_t h;
+    double tempo;
+    Solucao sol;
+    SolucaoBIN solB;
+
+    //---
+    printf("\n>>> TESTE DE COMPARACAO DAS ESTRUTURAS DA SOLUCAO - PMM3 - %d REPETICOES\n\n", repeticoes);
+    lerDados("pmm3.txt");
+
+    //---
+    h = clock();
+    for(int r = 0; r < repeticoes; r++)
+        heuConAle(sol);
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    printf("Heuristica construtiva aleatoria................: %.5f seg.\n",tempo);
+
+    //---
+    h = clock();
+    for(int r = 0; r < repeticoes; r++)
+        heuConAleBIN(solB);
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    printf("Heuristica construtiva aleatoria (BINARIA)......: %.5f seg.\n",tempo);
+
+    //---
+    h = clock();
+    for(int r = 0; r < repeticoes; r++)
+        calcFO(sol);
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    printf("\nCalculo da FO...................................: %.5f seg.\n",tempo);
+
+    //---
+    h = clock();
+    for(int r = 0; r < repeticoes; r++)
+        calcFOBIN(solB);
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    printf("Calculo da FO (BINARIA).........................: %.5f seg.\n",tempo);
+
+    //---
+    heuConAle(sol);
+    heuConAleBIN(solB);
+    printf("\nSolucao:");
+    escreverSolucao(sol, 0);
+    printf("\nSolucao BINARIA:");
+    escreverSolucaoBIN(solB, 0);
+}
+
 void teste_alocacao()
 {
     const int tamanho = 500;
@@ -162,4 +227,52 @@ void teste_alocacao()
     tempo = (double)h/CLOCKS_PER_SEC;
     printf("Tempo para zerar a matriz estatica com MEMSET...: %.5f segundos\n", tempo);
     //---
+}
+
+const int PESO2 = 50;
+
+void heuConAleBIN(SolucaoBIN &s)
+{
+    for(int i = 0; i < numMoc; i++)
+        for(int j = 0; j < numObj; j++)
+            s.matSol[i][j] = rand()%2;
+}
+
+void calcFOBIN(SolucaoBIN &s)
+{
+    memset(&s.vetPesMoc, 0, sizeof(s.vetPesMoc));
+    memset(&s.vetQtdMocObj, 0, sizeof(s.vetQtdMocObj));
+    s.funObj = 0;
+    for(int i = 0; i < numMoc; i++)
+        for(int j = 0; j < numObj; j++)
+        {
+            s.funObj += s.matSol[i][j] * vetValObj[j];
+            s.vetPesMoc[i] += s.matSol[i][j] * vetPesObj[j];
+            s.vetQtdMocObj[j] += s.matSol[i][j];
+        }
+    for(int i = 0; i < numMoc; i++)
+        s.funObj -= PESO * MAX(0, s.vetPesMoc[i] - vetCapMoc[i]);
+    for(int j = 0; j < numObj; j++)
+        s.funObj -= PESO2 * MAX(0, s.vetQtdMocObj[j] - 1);
+}
+
+void escreverSolucaoBIN(SolucaoBIN &s, const bool flag)
+{
+    printf("\nFO: %d\n", s.funObj);
+    if(flag)
+    {
+        printf("VETOR QTD MOCHILAS DE CADA OBJETO: ");
+        for(int j = 0; j < numObj; j++)
+            printf("%d  ", s.vetQtdMocObj[j]);
+        printf("\nVETOR PESO MOCHILAS: ");
+        for(int i = 0; i < numMoc; i++)
+            printf("%d  ", s.vetPesMoc[i]);\
+        printf("\nMATRIZ DE SOLUCAO:\n");
+        for(int i = 0; i < numMoc; i++)
+        {
+            for(int j = 0; j < numObj; j++)
+                printf("%d  ", s.matSol[i][j]);
+            printf("\n");
+        }
+    }
 }
