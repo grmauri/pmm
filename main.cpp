@@ -12,16 +12,17 @@ int PESO = 100;
 
 int main()
 {
+    srand(time(NULL));
+
     //teste_alocacao();
-    testar_estruturas();
+    //testar_estruturas();
+    testar_heuConstrutivas();
 
 
-    //Solucao sol;
-    //lerDados("pmm1.txt");
-    //testarDados("");
-    //heuConAle(sol);
-    //calcFO(sol);
-    //escreverSolucao(sol,1);
+
+
+
+
 
 
 
@@ -29,6 +30,45 @@ int main()
 }
 
 
+
+void heuConAleGul(Solucao &s, const int percentual)
+{
+    int tam, pos, aux;
+    int vetAux[MAX_OBJ];
+    memcpy(&vetAux, &vetIndObjOrd, sizeof(vetIndObjOrd));
+    tam = MAX(1, (percentual / 100.0) * numObj);
+    for(int j = 0; j < tam; j++)
+    {
+        pos = j + rand()%(numObj - j);
+        aux = vetAux[pos];
+        vetAux[pos] = vetAux[j];
+        vetAux[j] = aux;
+    }
+    memset(&s.vetPesMoc, 0, sizeof(s.vetPesMoc));
+    memset(&s.vetIdMocObj, -1, sizeof(s.vetIdMocObj));
+    for(int j = 0; j < numObj; j++)
+        for(int i = 0; i < numMoc; i++)
+            if(s.vetPesMoc[i] + vetPesObj[vetAux[j]] <= vetCapMoc[i])
+            {
+                s.vetIdMocObj[vetAux[j]] = i;
+                s.vetPesMoc[i] += vetPesObj[vetAux[j]];
+                break;
+            }
+}
+
+void heuConGul(Solucao &s)
+{
+    memset(&s.vetPesMoc, 0, sizeof(s.vetPesMoc));
+    memset(&s.vetIdMocObj, -1, sizeof(s.vetIdMocObj));
+    for(int j = 0; j < numObj; j++)
+        for(int i = 0; i < numMoc; i++)
+            if(s.vetPesMoc[i] + vetPesObj[vetIndObjOrd[j]] <= vetCapMoc[i])
+            {
+                s.vetIdMocObj[vetIndObjOrd[j]] = i;
+                s.vetPesMoc[i] += vetPesObj[vetIndObjOrd[j]];
+                break;
+            }
+}
 
 void heuConAle(Solucao &s)
 {
@@ -61,6 +101,29 @@ void escreverSolucao(Solucao &s, const bool flag)
         printf("\nVETOR PESO MOCHILAS: ");
         for(int i = 0; i < numMoc; i++)
             printf("%d  ", s.vetPesMoc[i]);
+    }
+}
+
+void ordenarObjetos()
+{
+    int flag, aux;
+    for(int j = 0; j < numObj; j++)
+        vetIndObjOrd[j] = j;
+    flag = 1;
+    while(flag)
+    {
+        flag = 0;
+        for(int j = 0; j < numObj - 1; j++)
+        {
+            if((double)vetValObj[vetIndObjOrd[j]]/vetPesObj[vetIndObjOrd[j]] <
+               (double)vetValObj[vetIndObjOrd[j+1]]/vetPesObj[vetIndObjOrd[j+1]])
+            {
+                flag = 1;
+                aux = vetIndObjOrd[j];
+                vetIndObjOrd[j] = vetIndObjOrd[j+1];
+                vetIndObjOrd[j+1] = aux;
+            }
+        }
     }
 }
 
@@ -100,11 +163,51 @@ void testarDados(char *arq)
 
 
 
+//======== ESTRUTURAS E METODOS AUXILIARES ========
+const int PESO2 = 50; // peso usado para objetos levados em mais de uma mochila
 
+void testar_heuConstrutivas()
+{
+    Solucao sol;
+    clock_t h;
+    double tempo;
+    const int repeticoes = 10000;
 
+    lerDados("pmm3.txt");
+    ordenarObjetos();
 
+    printf("\n\n>>> TESTE - HEURISTICAS CONSTRUTIVAS - PMM3 - %d REPETICOES\n", repeticoes);
 
+    //---
+    h = clock();
+    for(int r = 0; r < repeticoes; r++)
+        heuConAle(sol);
+    calcFO(sol);
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    escreverSolucao(sol, 0);
+    printf("Construtiva Aleatoria...: %.5f seg.\n",tempo);
 
+    //---
+    h = clock();
+    for(int r = 0; r < repeticoes; r++)
+        heuConGul(sol);
+    calcFO(sol);
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    escreverSolucao(sol, 0);
+    printf("Construtiva Gulosa...: %.5f seg.\n",tempo);
+
+    //---
+    h = clock();
+    for(int r = 0; r < repeticoes; r++)
+        heuConAleGul(sol, 10); // 10% de aleatoriedade
+    calcFO(sol);
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    escreverSolucao(sol, 0);
+    printf("Construtiva Aleatoria Gulosa...: %.5f seg.\n",tempo);
+}
 
 void testar_estruturas()
 {
@@ -117,7 +220,7 @@ void testar_estruturas()
     SolucaoBIN solB;
 
     //---
-    printf("\n>>> TESTE DE COMPARACAO DAS ESTRUTURAS DA SOLUCAO - PMM3 - %d REPETICOES\n\n", repeticoes);
+    printf("\n\n>>> TESTE DE COMPARACAO DAS ESTRUTURAS DA SOLUCAO - PMM3 - %d REPETICOES\n\n", repeticoes);
     lerDados("pmm3.txt");
 
     //---
@@ -228,8 +331,6 @@ void teste_alocacao()
     printf("Tempo para zerar a matriz estatica com MEMSET...: %.5f segundos\n", tempo);
     //---
 }
-
-const int PESO2 = 50;
 
 void heuConAleBIN(SolucaoBIN &s)
 {

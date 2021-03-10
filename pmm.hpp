@@ -18,12 +18,16 @@ int numMoc;
 int vetValObj[MAX_OBJ];
 int vetPesObj[MAX_OBJ];
 int vetCapMoc[MAX_MOC];
+int vetIndObjOrd[MAX_OBJ];
 
-
+void heuConAleGul(Solucao &s, const int percentual);
+void heuConGul(Solucao &s);
 void heuConAle(Solucao &s);
+
 void calcFO(Solucao &s);
 void escreverSolucao(Solucao &s, const bool flag);
 
+void ordenarObjetos();
 void lerDados(std::string arq);
 void testarDados(char *arq);
 //=================================================
@@ -47,5 +51,6 @@ void escreverSolucaoBIN(SolucaoBIN &s, const bool flag);
 //---
 void teste_alocacao();
 void testar_estruturas();
+void testar_heuConstrutivas();
 
 #endif // PMM_HPP_INCLUDED
