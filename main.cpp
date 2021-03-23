@@ -10,13 +10,18 @@ using namespace std;
 
 int PESO = 100;
 
+
+
+
 int main()
 {
     srand(time(NULL));
 
-    //teste_alocacao();
+    //testar_alocacao();
     //testar_estruturas();
-    testar_heuConstrutivas();
+    //testar_heuConstrutivas();
+    testar_buscaLocal();
+
 
 
 
@@ -30,6 +35,125 @@ int main()
 }
 
 
+
+
+
+
+
+//-------------------------------------------------
+void heuBLRA(Solucao &s, const int iteracoes)
+{
+    int obj, moc, mocOri, foOri, flag;
+    int melFO = s.funObj;
+    while(true)
+    {
+        flag = 1;
+        for(int t = 0; t < iteracoes; t++)
+        {
+            foOri = s.funObj;
+            obj = rand()%numObj;
+            do
+                moc = rand()%(numMoc + 1) - 1;
+            while(moc == s.vetIdMocObj[obj]);
+            mocOri = s.vetIdMocObj[obj];
+            s.vetIdMocObj[obj] = moc;
+            calcFO(s);
+            if(s.funObj > melFO)
+            {
+                melFO = s.funObj;
+                flag = 0;
+            }
+            else
+            {
+                s.vetIdMocObj[obj] = mocOri;
+                s.funObj = foOri;
+            }
+        }
+        if(flag)
+            break;
+    }
+    calcFO(s);
+}
+
+//-------------------------------------------------
+void heuBLMM(Solucao &s)
+{
+    int mocOri, foOri, melObj, melMoc, flag;
+    int melFO = s.funObj;
+    while(true)
+    {
+        flag = 0;
+        foOri = s.funObj;
+        for(int j = 0; j < numObj; j++)
+        {
+            mocOri = s.vetIdMocObj[j];
+            for(int i = -1; i < numMoc; i++)
+            {
+                if(i != mocOri)
+                {
+                    s.vetIdMocObj[j] = i;
+                    calcFO(s);
+                    if(s.funObj > melFO)
+                    {
+                        melFO = s.funObj;
+                        melObj = j;
+                        melMoc = i;
+                        flag = 1;
+                    }
+                }
+            }
+            s.vetIdMocObj[j] = mocOri;
+            s.funObj = foOri;
+        }
+        if(flag)
+        {
+            s.vetIdMocObj[melObj] = melMoc;
+            s.funObj = melFO;
+        }
+        else
+            break;
+    }
+    calcFO(s);
+}
+
+//-------------------------------------------------
+void heuBLPM(Solucao &s)
+{
+    int vetObjAux[MAX_OBJ]; // usado para evitar determinismo na ordem de teste dos objetos
+    int mocOri, foOri, indice, aux;
+    int melFO = s.funObj;
+    for(int j = 0; j < numObj; j++)
+        vetObjAux[j] = j;
+    INICIO : ;
+    foOri = s.funObj;
+    for(int j = 0; j < numObj; j++)
+    {
+        indice = j + rand()%(numObj - j);
+        mocOri = s.vetIdMocObj[vetObjAux[indice]];
+        for(int i = -1; i < numMoc; i++)
+        {
+            if(i != mocOri)
+            {
+                s.vetIdMocObj[vetObjAux[indice]] = i;
+                calcFO(s);
+                if(s.funObj > melFO)
+                {
+                    melFO = s.funObj;
+                    goto INICIO;
+                }
+                else
+                {
+                    s.vetIdMocObj[vetObjAux[indice]] = mocOri;
+                    s.funObj = foOri;
+                }
+            }
+        }
+        aux = vetObjAux[j];
+        vetObjAux[j] = vetObjAux[indice];
+        vetObjAux[indice] = aux;
+    }
+    calcFO(s);
+}
 
 void heuConAleGul(Solucao &s, const int percentual)
 {
@@ -166,6 +290,50 @@ void testarDados(char *arq)
 //======== ESTRUTURAS E METODOS AUXILIARES ========
 const int PESO2 = 50; // peso usado para objetos levados em mais de uma mochila
 
+void testar_buscaLocal()
+{
+    Solucao sol;
+    clock_t h;
+    double tempo;
+
+    lerDados("pmm3.txt");
+    ordenarObjetos();
+
+    printf("\n\n>>> TESTE - BUSCA LOCAL - PMM3\n\n");
+
+    heuConAle(sol);
+    calcFO(sol);
+    printf("Solucao inicial:");
+    escreverSolucao(sol, 0);
+
+    Solucao sol2;
+    memcpy(&sol2, &sol, sizeof(sol));
+
+    Solucao sol3;
+    memcpy(&sol3, &sol, sizeof(sol));
+
+    h = clock();
+    heuBLPM(sol);
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    escreverSolucao(sol, 0);
+    printf("BL PM...: %.5f seg.\n",tempo);
+
+    h = clock();
+    heuBLMM(sol2);
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    escreverSolucao(sol2, 0);
+    printf("BL MM...: %.5f seg.\n",tempo);
+
+    h = clock();
+    heuBLRA(sol3, (numObj * (numMoc + 1)));
+    h = clock() - h;
+    tempo = (double)h/CLOCKS_PER_SEC;
+    escreverSolucao(sol3, 0);
+    printf("BL RA...: %.5f seg.\n",tempo);
+}
+
 void testar_heuConstrutivas()
 {
     Solucao sol;
@@ -264,7 +432,7 @@ void testar_estruturas()
     escreverSolucaoBIN(solB, 0);
 }
 
-void teste_alocacao()
+void testar_alocacao()
 {
     const int tamanho = 500;
     const int repeticoes = 1000;
