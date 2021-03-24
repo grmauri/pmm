@@ -2,34 +2,44 @@
 #include <time.h>
 #include <memory.h>
 
+#ifndef _WIN64
+    #include <climits>
+#endif
+
 #include "pmm.hpp"
 
 #define MAX(X,Y) ((X > Y) ? X : Y)
 
-using namespace std;
+//#define MODO_TESTE
 
 int PESO = 100;
 
+using namespace std;
 
-
-
-int main()
+int main(int argc, char *argv[])
 {
-    srand(time(NULL));
+    #ifdef MODO_TESTE
+        testar_alocacao();
+        testar_estruturas();
+        testar_heuConstrutivas();
+        testar_buscaLocal();
+    #else
+        //---
+        int seed = 0;
+        string instancia = "pmm1.txt";
+        string exec = argv[0];
+        if (argc > 1)
+        {
+            seed = stoi(argv[1]);
+            instancia = argv[2];
+        }
 
-    //testar_alocacao();
-    //testar_estruturas();
-    //testar_heuConstrutivas();
-    testar_buscaLocal();
+        srand(seed);
+        //int a = INT_MAX;
+        //printf("%d", a);
 
-
-
-
-
-
-
-
-
+        printf("Exec: %s\tSeed: %d\t\tInstancia: %s", exec.c_str(), seed, instancia.c_str());
+    #endif
 
     return 0;
 }
