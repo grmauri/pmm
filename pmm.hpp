@@ -21,7 +21,6 @@ int vetCapMoc[MAX_MOC];
 int vetIndObjOrd[MAX_OBJ];
 
 
-
 //---
 void heuBLRA(Solucao &s, const int iteracoes);
 void heuBLMM(Solucao &s);
