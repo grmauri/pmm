@@ -6,6 +6,7 @@
 
 #include <string>
 
+// Estruturas de dados
 typedef struct tSolucao
 {
     int vetPesMoc[MAX_MOC];
@@ -13,6 +14,7 @@ typedef struct tSolucao
     int funObj;
 }Solucao;
 
+// Dados de entrada
 int numObj;
 int numMoc;
 int vetValObj[MAX_OBJ];
@@ -20,7 +22,28 @@ int vetPesObj[MAX_OBJ];
 int vetCapMoc[MAX_MOC];
 int vetIndObjOrd[MAX_OBJ];
 
-
+// Metodos
+void simulated_annealing(const double alfa, const int sa_max, const double temp_ini, const double temp_con,
+                         const double tempo_max, Solucao &s, double &tempo_melhor, double &tempo_total);
+void gerar_vizinha(Solucao &s);
+//---
+void busca_tabu(const int tam_lista, const double tempo_max, Solucao &s, double &tempo_melhor, double &tempo_total);
+int procurar_lista(int **lista, const int qtd, const int o, const int m);
+void remover_lista(int **lista, int &qtd, const int pos);
+void inserir_lista(int **lista, int &qtd, const int tam, const int o, const int m);
+//---
+void grasp(const int lrc, const double tempo_max, Solucao &s, double &tempo_melhor, double &tempo_total);
+//---
+Solucao vet_populacao[100000];
+void algoritmo_genetico(const int pop, const int cro, const double mut, const double eli,
+                        const double tempo_max, Solucao &s, double &tempo_melhor, double &tempo_total);
+void crossover(const int p1, const int p2, const int f1, const int f2);
+void ordenar_populacao(const int limite);
+//---
+void vns(const double tempo_max, Solucao &s, double &tempo_melhor, double &tempo_total);
+void gerar_vizinha2(Solucao &s);
+//---
+void ils(const double tempo_max, Solucao &s, double &tempo_melhor, double &tempo_total);
 //---
 void heuBLRA(Solucao &s, const int iteracoes);
 void heuBLMM(Solucao &s);
